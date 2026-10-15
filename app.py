@@ -31,28 +31,21 @@ from services.gemini_service import (
 
 # ---------------------------------------------------------
 # WSGI / Serverless Compatibility Exports
-# (Satisfies deployment platforms like Vercel or WSGI runners scanning for top-level exports)
+# (Serves the full ThinkAI Studio web app if executed via Vercel / WSGI)
 # ---------------------------------------------------------
-def handler(environ=None, start_response=None, *args, **kwargs):
-    if start_response:
-        start_response("200 OK", [("Content-Type", "text/html; charset=utf-8")])
-        return [
-            b"<!DOCTYPE html><html><head><title>ThinkAI Studio</title></head>"
-            b"<body style='font-family:sans-serif;background:#212121;color:#fff;text-align:center;padding:50px;'>"
-            b"<h1>&#9889; ThinkAI Studio</h1>"
-            b"<p>This application is powered by Streamlit (with live WebSocket streaming).</p>"
-            b"<p>For the full interactive UI, deploy on <a style='color:#10a37f;' href='https://share.streamlit.io'>Streamlit Community Cloud</a> or Render.</p>"
-            b"</body></html>"
-        ]
-    return {
-        "statusCode": 200,
-        "headers": {"Content-Type": "text/html"},
-        "body": "ThinkAI Studio is a Streamlit application.",
-    }
-
-
-app = handler
-application = handler
+try:
+    from api.index import app as vercel_app
+    app = vercel_app
+    application = vercel_app
+    handler = vercel_app
+except Exception:
+    def handler(environ=None, start_response=None, *args, **kwargs):
+        if start_response:
+            start_response("200 OK", [("Content-Type", "text/plain")])
+            return [b"ThinkAI Studio is running."]
+        return {"statusCode": 200, "body": "ThinkAI Studio"}
+    app = handler
+    application = handler
 
 # ---------------------------------------------------------
 # Page Configuration (Collapsed Sidebar & Centered Layout)

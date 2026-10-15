@@ -158,13 +158,32 @@ When presenting to judges, follow this concise 4-step sequence:
 
 ---
 
+---
+
+## ⚡ Deploy to Vercel (1-Click Cloud Deployment)
+
+This project is fully optimized for **Vercel Serverless Functions** with a pure ChatGPT-dark single-page application.
+
+1. Go to [Vercel Dashboard](https://vercel.com/) and click **Add New...** -> **Project**.
+2. Import your GitHub repository: `https://github.com/BibinKummar-TC/ChatbotIBM.git`.
+3. Under **Environment Variables**, add:
+   - **Name**: `GEMINI_API_KEY`
+   - **Value**: Your Gemini API key (`AQ.Ab8...`)
+4. Click **Deploy**.
+5. Vercel automatically detects `vercel.json` and packages `api/index.py` as a serverless microservice running your live ChatGPT-style web interface!
+
+---
+
 ## 📂 Project Structure
 
 ```
 LLM/
-├── app.py                      # Main Streamlit web application & Dark UI
-├── requirements.txt            # Python package dependencies
-├── README.md                   # Complete documentation & demo guide
+├── app.py                      # Streamlit UI & WSGI fallback export
+├── vercel.json                 # Vercel serverless function & routing configuration
+├── api/
+│   └── index.py                # Vercel Serverless entrypoint & ChatGPT dark SPA
+├── requirements.txt            # Python dependencies (google-genai, Flask, Streamlit)
+├── README.md                   # Complete documentation & deployment guide
 ├── .env.example                # Template for environment configuration
 ├── .env                        # Local API key storage (git-ignored)
 ├── .gitignore                  # Protection against secret leakage
@@ -173,21 +192,21 @@ LLM/
 │   └── gemini_service.py       # Google Gen AI SDK client, streaming, sanitization
 └── tests/
     ├── __init__.py             # Test package export
-    └── test_service.py         # Automated unit & integration test suite
+    ├── test_api.py             # Automated unit tests for Vercel API endpoints
+    └── test_service.py         # Automated unit & integration tests for Gemini service
 ```
 
 ---
 
 ## 🛠️ Troubleshooting
 
-- **503 UNAVAILABLE (High Demand)**: During peak times, certain preview models like `gemini-3.8-flash` may experience temporary spikes. Simply select `gemini-3.5-flash-lite` or `gemma-4-31b-it` from the sidebar dropdown.
+- **503 UNAVAILABLE (High Demand)**: During peak times, certain preview models like `gemini-3.8-flash` may experience temporary spikes. Simply select `gemini-3.5-flash-lite` or `gemma-4-31b-it`.
 - **429 RESOURCE_EXHAUSTED (Quota Exceeded)**: You have exceeded the rate limit for the current minute. Pause for 10-15 seconds before submitting another prompt.
-- **Key Missing**: Ensure `.env` is located in the working directory where `streamlit run app.py` is invoked, or paste the key into the sidebar text field.
+- **Key Missing**: Ensure `GEMINI_API_KEY` is added to Vercel Environment Variables or in your local `.env`.
 
 ---
 
 ## 📜 License & Acknowledgments
 - Powered by Google Gemini API & Google DeepMind.
-- Built with Streamlit and Python 3.11+.
+- Built with Flask, Streamlit, and Python 3.11+.
 
-# IBMCHARBOT
