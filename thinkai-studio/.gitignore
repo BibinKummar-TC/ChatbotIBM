@@ -1,0 +1,56 @@
+# Environment and secrets
+.env
+*.env
+*.env.*
+!.env.example
+
+# Google Cloud & Service Account Credential Files
+*.json.key
+*service_account*.json
+*service-account*.json
+*credentials*.json
+credentials.json
+client_secret*.json
+*.pem
+*.key
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.python311/
+.uv-cache/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+*.log
