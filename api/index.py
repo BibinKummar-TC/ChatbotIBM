@@ -30,6 +30,7 @@ from services.gemini_service import (
 )
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 
 # Single-Page Application (SPA) HTML Template
 INDEX_HTML = """<!DOCTYPE html>
@@ -840,12 +841,20 @@ INDEX_HTML = """<!DOCTYPE html>
 
 
 @app.route("/", methods=["GET"])
+@app.route("/index", methods=["GET"])
+@app.route("/index.html", methods=["GET"])
+@app.route("/index.py", methods=["GET"])
+@app.route("/app", methods=["GET"])
+@app.route("/app.py", methods=["GET"])
+@app.route("/api/index", methods=["GET"])
+@app.route("/api/index.py", methods=["GET"])
 def index():
     """Serves the ChatGPT-style single-page interface."""
     return Response(INDEX_HTML, mimetype="text/html")
 
 
 @app.route("/api/health", methods=["GET"])
+@app.route("/health", methods=["GET"])
 def health():
     """Returns application health status and credential readiness."""
     studio_url = os.getenv("THINKAI_STUDIO_URL")
@@ -870,6 +879,7 @@ def health():
 
 
 @app.route("/api/models", methods=["GET"])
+@app.route("/models", methods=["GET"])
 def models():
     """Returns list of curated and recommended models."""
     studio_url = os.getenv("THINKAI_STUDIO_URL")
@@ -884,6 +894,7 @@ def models():
 
 
 @app.route("/api/verify", methods=["POST", "GET"])
+@app.route("/verify", methods=["POST", "GET"])
 def verify():
     """Tests live connection to Gemini API."""
     data = request.get_json(silent=True) or {}
@@ -901,12 +912,21 @@ def verify():
     return jsonify({"success": connected, "message": message})
 
 
-@app.route("/api/chat", methods=["POST"])
+@app.route("/api/chat", methods=["POST", "GET"])
+@app.route("/chat", methods=["POST", "GET"])
 def chat():
     """
     Executes a multi-turn chat request using Google Gemini API.
     Guarantees no raw secrets are leaked in error responses.
     """
+    if request.method == "GET":
+        return jsonify({
+            "status": "active",
+            "endpoint": "/api/chat",
+            "method": "POST",
+            "info": "Send a POST request with JSON payload {'message': '...'} to generate an AI response."
+        })
+
     data = request.get_json(force=True)
     user_message = data.get("message", "").strip()
     if not user_message:
@@ -962,9 +982,22 @@ def chat():
         return jsonify({"error": sanitized}), 500
 
 
+@app.errorhandler(404)
+def handle_404(e):
+    """
+    Fallback 404 handler.
+    If the requested URL is an unrecognized /api/ route, return a clean JSON 404.
+    For all other browser paths or Vercel routing rewrites, serve the ChatGPT SPA interface.
+    """
+    if request.path.startswith("/api/") and not request.path.startswith("/api/index"):
+        return jsonify({"error": f"API endpoint '{request.path}' was not found on this server."}), 404
+    return Response(INDEX_HTML, mimetype="text/html")
+
+
 # Export WSGI application for Vercel
 handler = app
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=True)
+
 
