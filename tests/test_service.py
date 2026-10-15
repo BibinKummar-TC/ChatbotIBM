@@ -71,7 +71,7 @@ class TestGeminiServiceUnit(unittest.TestCase):
 
     def test_client_init_missing_service_account_file(self):
         """Verify non-existent GOOGLE_APPLICATION_CREDENTIALS path raises clear error."""
-        with patch.dict(os.environ, {"GOOGLE_APPLICATION_CREDENTIALS": "/nonexistent/path/sa.json", "GEMINI_API_KEY": ""}):
+        with patch.dict(os.environ, {"GOOGLE_APPLICATION_CREDENTIALS": "/nonexistent/path/sa.json", "GEMINI_API_KEY": "", "GOOGLE_API_KEY": ""}):
             with self.assertRaises(ValueError) as ctx:
                 get_gemini_client(api_key=None)
             self.assertIn("GOOGLE_APPLICATION_CREDENTIALS file not found", str(ctx.exception))

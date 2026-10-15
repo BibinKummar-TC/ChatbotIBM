@@ -124,7 +124,7 @@ def get_gemini_client(api_key: Optional[str] = None) -> genai.Client:
     if api_key is not None:
         effective_key = api_key.strip()
     else:
-        effective_key = (os.getenv("GEMINI_API_KEY") or "").strip()
+        effective_key = (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "").strip()
 
     if effective_key:
         return genai.Client(api_key=effective_key)
@@ -150,7 +150,7 @@ class GeminiService:
     """High-level service managing Gemini interactions for ThinkAI Studio."""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self._client: Optional[genai.Client] = None
 
     @property

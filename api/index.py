@@ -868,7 +868,7 @@ def health():
         except Exception:
             pass
 
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     return jsonify({
         "status": "healthy",
         "service": "ThinkAI Studio",
