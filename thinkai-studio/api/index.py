@@ -20,6 +20,7 @@ if ROOT_DIR not in sys.path:
 from dotenv import load_dotenv
 load_dotenv()
 
+import requests
 from flask import Flask, request, jsonify, Response, stream_with_context
 from services.gemini_service import (
     GeminiService,
@@ -847,6 +848,17 @@ def index():
 @app.route("/api/health", methods=["GET"])
 def health():
     """Returns application health status and credential readiness."""
+    studio_url = os.getenv("THINKAI_STUDIO_URL")
+    if studio_url:
+        try:
+            target = f"{studio_url.rstrip('/')}/api/health"
+            resp = requests.get(target, timeout=5)
+            data = resp.json()
+            data["bound_service"] = "thinkai-studio"
+            return jsonify(data), resp.status_code
+        except Exception:
+            pass
+
     api_key = os.getenv("GEMINI_API_KEY")
     return jsonify({
         "status": "healthy",
@@ -860,6 +872,14 @@ def health():
 @app.route("/api/models", methods=["GET"])
 def models():
     """Returns list of curated and recommended models."""
+    studio_url = os.getenv("THINKAI_STUDIO_URL")
+    if studio_url:
+        try:
+            target = f"{studio_url.rstrip('/')}/api/models"
+            resp = requests.get(target, timeout=5)
+            return jsonify(resp.json()), resp.status_code
+        except Exception:
+            pass
     return jsonify({"models": RECOMMENDED_MODELS})
 
 
@@ -867,6 +887,14 @@ def models():
 def verify():
     """Tests live connection to Gemini API."""
     data = request.get_json(silent=True) or {}
+    studio_url = os.getenv("THINKAI_STUDIO_URL")
+    if studio_url:
+        try:
+            target = f"{studio_url.rstrip('/')}/api/verify"
+            resp = requests.post(target, json=data, timeout=15)
+            return jsonify(resp.json()), resp.status_code
+        except Exception:
+            pass
     model = data.get("model", "gemini-3.5-flash-lite")
     service = GeminiService()
     connected, message = service.verify_connection(model=model)
@@ -879,12 +907,22 @@ def chat():
     Executes a multi-turn chat request using Google Gemini API.
     Guarantees no raw secrets are leaked in error responses.
     """
-    try:
-        data = request.get_json(force=True)
-        user_message = data.get("message", "").strip()
-        if not user_message:
-            return jsonify({"error": "Message content cannot be empty."}), 400
+    data = request.get_json(force=True)
+    user_message = data.get("message", "").strip()
+    if not user_message:
+        return jsonify({"error": "Message content cannot be empty."}), 400
 
+    studio_url = os.getenv("THINKAI_STUDIO_URL")
+    if studio_url:
+        try:
+            target = f"{studio_url.rstrip('/')}/api/chat"
+            resp = requests.post(target, json=data, timeout=30)
+            return jsonify(resp.json()), resp.status_code
+        except Exception as forward_err:
+            sanitized = sanitize_error_message(forward_err)
+            return jsonify({"error": f"Internal service communication error: {sanitized}"}), 502
+
+    try:
         model = data.get("model", "gemini-3.5-flash-lite")
         temperature = float(data.get("temperature", 0.7))
         system_instruction = data.get("system_instruction")
@@ -929,3 +967,4 @@ handler = app
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=True)
+

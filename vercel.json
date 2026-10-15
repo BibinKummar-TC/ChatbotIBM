@@ -1,14 +1,29 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 30
+  "services": {
+    "app": {
+      "root": ".",
+      "framework": "flask",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "thinkai-studio",
+          "format": "url",
+          "env": "THINKAI_STUDIO_URL"
+        }
+      ]
+    },
+    "thinkai-studio": {
+      "root": "thinkai-studio",
+      "framework": "flask"
     }
   },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/index.py"
+      "destination": {
+        "service": "app"
+      }
     }
   ]
 }

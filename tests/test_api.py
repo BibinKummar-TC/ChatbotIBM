@@ -71,6 +71,49 @@ class TestVercelApi(unittest.TestCase):
         self.assertEqual(data["reply"], "Hello from Gemini!")
         self.assertEqual(data["model"], "gemini-3.5-flash-lite")
 
+    @patch("requests.post")
+    def test_chat_endpoint_with_service_binding(self, mock_requests_post):
+        """Verify chat forwards to internal service URL when THINKAI_STUDIO_URL is bound."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "reply": "Forwarded reply from internal thinkai-studio service",
+            "model": "gemini-3.5-flash-lite",
+        }
+        mock_requests_post.return_value = mock_resp
+
+        with patch.dict(os.environ, {"THINKAI_STUDIO_URL": "http://thinkai-studio.internal"}):
+            payload = {"message": "Hello service binding", "model": "gemini-3.5-flash-lite"}
+            response = self.client.post("/api/chat", json=payload)
+            self.assertEqual(response.status_code, 200)
+            data = response.get_json()
+            self.assertEqual(data["reply"], "Forwarded reply from internal thinkai-studio service")
+            mock_requests_post.assert_called_once()
+            args, kwargs = mock_requests_post.call_args
+            self.assertEqual(args[0], "http://thinkai-studio.internal/api/chat")
+
+    @patch("requests.get")
+    def test_health_endpoint_with_service_binding(self, mock_requests_get):
+        """Verify health check queries bound internal service when THINKAI_STUDIO_URL is set."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "status": "healthy",
+            "service": "ThinkAI Studio Internal",
+            "has_api_key": True,
+            "key_masked": "AQ.Ab8...45lQ",
+        }
+        mock_requests_get.return_value = mock_resp
+
+        with patch.dict(os.environ, {"THINKAI_STUDIO_URL": "http://thinkai-studio.internal"}):
+            response = self.client.get("/api/health")
+            self.assertEqual(response.status_code, 200)
+            data = response.get_json()
+            self.assertEqual(data["bound_service"], "thinkai-studio")
+            mock_requests_get.assert_called_once_with("http://thinkai-studio.internal/api/health", timeout=5)
+
 
 if __name__ == "__main__":
     unittest.main()
+
+
